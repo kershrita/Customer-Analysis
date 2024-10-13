@@ -5,7 +5,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # Paths to your downloaded files
 model_path = r"C:\Users\FreeComp\Downloads\web\my_model.h5"
-tokenizer_path = r"C:\Users\FreeComp\Downloads\web\tokenizer.pkl"
+tokenizer_path = r"/workspaces/DEPI-/models/tokenizer.pkl"
 
 # Load the model
 model = load_model(model_path)
