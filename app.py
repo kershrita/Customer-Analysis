@@ -23,7 +23,7 @@ def predict_sentiment(text, maxlen=100):
     # Make a prediction
     prediction = model.predict(padded_sequence)
     sentiment = 'positive' if prediction[0][0] >= 0.5 else 'negative'
-    
+
     return sentiment
 
 # Create the Streamlit user interface
