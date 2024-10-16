@@ -11,7 +11,6 @@ tokenizer_path = 'models/tokenizer.pkl'
 
 # Error handling for model loading
 try:
-    # Check if model file exists
     if os.path.exists(model_path):
         model = load_model(model_path)
     else:
@@ -21,7 +20,6 @@ except Exception as e:
 
 # Error handling for tokenizer loading
 try:
-    # Check if tokenizer file exists
     if os.path.exists(tokenizer_path):
         with open(tokenizer_path, 'rb') as tokenizer_file:
             tokenizer = pickle.load(tokenizer_file)
@@ -31,25 +29,18 @@ except Exception as e:
     st.error(f"Error loading tokenizer: {e}")
 
 # Sentiment labels and custom threshold
-LABELS = {0: "Negative", 1: "Positive"}
 CUSTOM_THRESHOLD = 0.5
 
 # Predict sentiment function
 def predict_sentiment(text, maxlen=100):
     try:
-        # Preprocess the input text
         sequence = tokenizer.texts_to_sequences([text])
         padded_sequence = pad_sequences(sequence, maxlen=maxlen)
 
-        # Make a prediction
         prediction = model.predict(padded_sequence)
-        predicted_probability = prediction[0][0]  # Assuming binary classification with a single output node
+        predicted_probability = prediction[0][0]
 
-        # Determine sentiment label based on prediction
-        if predicted_probability >= CUSTOM_THRESHOLD:
-            sentiment_label = "Positive"
-        else:
-            sentiment_label = "Negative"
+        sentiment_label = "Positive" if predicted_probability >= CUSTOM_THRESHOLD else "Negative"
 
         return sentiment_label, predicted_probability
     except Exception as e:
@@ -57,19 +48,32 @@ def predict_sentiment(text, maxlen=100):
         return None, None
 
 # Streamlit UI
+st.set_page_config(page_title="Sentiment Analysis", layout="centered")
+
+# Change background color (you can adjust the color as needed)
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: 	#151B54;  /* Light blue background */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.title("Sentiment Analysis")
 
-# User input
-user_input = st.text_input("Enter text for sentiment analysis:")
+# User input 
+user_input = st.text_input("Enter text for sentiment analysis:", placeholder="Type your text here...")
 
-# Button to analyze sentiment
-if st.button("Analyze"):
-    if user_input:  # Check if input is not empty
-        sentiment, conf = predict_sentiment(user_input)
-        if sentiment:
-            st.write(f"The sentiment of the text is: **{sentiment}**")
-            st.write(f"Confident percentage is: **{conf*100:.2f}%**")
-        else:
-            st.error("An error occurred during sentiment analysis.")
+if user_input:  # Check if input not empty
+    sentiment, conf = predict_sentiment(user_input)
+    if sentiment:
+        emoji = "😀" if sentiment == "Positive" else "😢"
+        st.write(f"The sentiment of the text is: **{sentiment} {emoji}**")
+        st.write(f"Confidence percentage is: **{conf * 100:.2f}%**")
     else:
-        st.warning("Please enter some text to analyze.")
+        st.error("An error occurred during sentiment analysis.")
+else:
+    st.warning("Please enter a text to analyze.")
