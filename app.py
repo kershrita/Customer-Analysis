@@ -1,40 +1,75 @@
 import streamlit as st
+import os
+import numpy as np
 import pickle
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras.models import load_model
+from keras.preprocessing.sequence import pad_sequences
 
-# Paths to your downloaded files
-model_path = r"/workspaces/DEPI-/models/model.h5"
-tokenizer_path = r"/workspaces/DEPI-/models/tokenizer.pkl"
+# File paths
+model_path = 'models/model.h5'
+tokenizer_path = 'models/tokenizer.pkl'
 
-# Load the model
-model = load_model(model_path)
+# Error handling for model loading
+try:
+    # Check if model file exists
+    if os.path.exists(model_path):
+        model = load_model(model_path)
+    else:
+        st.error("Model file not found. Please check the model file path.")
+except Exception as e:
+    st.error(f"Error loading model: {e}")
 
-# Load the tokenizer
-with open(tokenizer_path, 'rb') as tokenizer_file:
-    tokenizer = pickle.load(tokenizer_file)
+# Error handling for tokenizer loading
+try:
+    # Check if tokenizer file exists
+    if os.path.exists(tokenizer_path):
+        with open(tokenizer_path, 'rb') as tokenizer_file:
+            tokenizer = pickle.load(tokenizer_file)
+    else:
+        st.error("Tokenizer file not found. Please check the tokenizer file path.")
+except Exception as e:
+    st.error(f"Error loading tokenizer: {e}")
 
-# predict sentiment
+# Sentiment labels and custom threshold
+LABELS = {0: "Negative", 1: "Positive"}
+CUSTOM_THRESHOLD = 0.5
+
+# Predict sentiment function
 def predict_sentiment(text, maxlen=100):
-    # Preprocess the input text
-    sequence = tokenizer.texts_to_sequences([text])
-    padded_sequence = pad_sequences(sequence, maxlen=maxlen)
-    
-    # Make a prediction
-    prediction = model.predict(padded_sequence)
-    sentiment = 'positive' if prediction[0][0] >= 0.5 else 'negative'
-    
-    return sentiment
+    try:
+        # Preprocess the input text
+        sequence = tokenizer.texts_to_sequences([text])
+        padded_sequence = pad_sequences(sequence, maxlen=maxlen)
 
-# Create the Streamlit user interface
+        # Make a prediction
+        prediction = model.predict(padded_sequence)
+        predicted_probability = prediction[0][0]  # Assuming binary classification with a single output node
+
+        # Determine sentiment label based on prediction
+        if predicted_probability >= CUSTOM_THRESHOLD:
+            sentiment_label = "Positive"
+        else:
+            sentiment_label = "Negative"
+
+        return sentiment_label, predicted_probability
+    except Exception as e:
+        st.error(f"Error during prediction: {e}")
+        return None, None
+
+# Streamlit UI
 st.title("Sentiment Analysis")
 
-# Add user input
+# User input
 user_input = st.text_input("Enter text for sentiment analysis:")
 
+# Button to analyze sentiment
 if st.button("Analyze"):
     if user_input:  # Check if input is not empty
-        sentiment = predict_sentiment(user_input)
-        st.write(f"The sentiment of the text is: **{sentiment}**")
+        sentiment, conf = predict_sentiment(user_input)
+        if sentiment:
+            st.write(f"The sentiment of the text is: **{sentiment}**")
+            st.write(f"Confident percentage is: **{conf*100:.2f}%**")
+        else:
+            st.error("An error occurred during sentiment analysis.")
     else:
-        st.write("Please enter some text to analyze.")
+        st.warning("Please enter some text to analyze.")
