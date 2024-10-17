@@ -50,7 +50,7 @@ def predict_sentiment(text, maxlen=100):
 # Streamlit UI
 st.set_page_config(page_title="Sentiment Analysis", layout="centered")
 
-# Change background color (you can adjust the color as needed)
+# Change background color
 st.markdown(
     """
     <style>
